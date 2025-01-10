@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>KAIST One Click Service</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 7px;
+      width: 150px;
+    }
+    title {
+      margin: 0;
+    }
+    .text{
+      color:#1487c8
+    }
+    h1 {
+      margin-top : 10px;
+      margin-bottom : 8px;
+    }
+    .mail-options {
+      list-style: none;
+      padding: 10px 5px 0px 2px;
+      font-size: 20px;
+      border: 2px solid #1487c8;
+      margin: 5px 0;
+    }
+    .mail-option {
+        margin-left: 0;
+    }
+    .padded {
+        padding-bottom: 8px;
+    }
+    #saveButton {
+      float: right;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1 class = "title"><span class="text">KAIST</span><br>One Click Service</h1>
+  <div class="mail-options">
+    <div class="mail-option padded">
+        <label><input type="radio" name="mail" value="naver"> NAVER mail</label>
+    </div>
+    <div class="mail-option padded">
+        <label><input type="radio" name="mail" value="google"> Gmail</label>
+    </div>
+  </div>
+  <button id="saveButton">Save</button>
+  <script src="popup.js"></script>
+</body>
+</html>

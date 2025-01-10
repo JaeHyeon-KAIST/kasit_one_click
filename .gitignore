@@ -1,0 +1,45 @@
+# MacOS 관련 파일
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Thumbnails
+._.DS_Store
+**/._*
+.Spotlight-V100
+.Trashes
+.metadata_never_index
+.AppleDesktop
+.fseventsd
+
+# IntelliJ IDEA 관련 파일
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Visual Studio Code 관련 파일
+.vscode/
+*.code-workspace
+
+# OS-specific directories
+*.swp
+*~
+*.swo
+
+# Logs
+*.log
+
+# Node modules (if applicable)
+node_modules/
+npm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
