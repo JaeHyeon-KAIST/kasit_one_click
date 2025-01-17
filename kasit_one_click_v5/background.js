@@ -133,8 +133,45 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
                         console.log("Filtered mail links:", mailLinks);
                       } else if (mailOption === "google") {
-                        await new Promise(resolve => setTimeout(resolve, 320));
-                        mailLinks = document.querySelectorAll(".zA");
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        const allMailItems = document.querySelectorAll(".zE");
+                        mailLinks = Array.from(allMailItems)
+                        .filter(item => {
+                          const textElement = item.querySelector(".bqe");
+                          if (!textElement || !textElement.textContent.includes("[카이스트] 인증 번호 입니다.")) {
+                            return false;
+                          } // 메일 제목에 "[카이스트] 인증 번호 입니다."가 없는 경우 제외
+
+                          // 메일의 날짜를 가져오기
+                          const timeElement = item.querySelector(".xW span[title]");
+                          if (timeElement) {
+                            const timeText = timeElement.getAttribute("title"); // 예: "2025년 1월 17일 (금) 오후 2:29"
+                            if (timeText) {
+                              const match = timeText.match(/(\d+)년 (\d+)월 (\d+)일.*(오전|오후)\s*(\d+):(\d+)/);
+                              if (match) {
+                                const [, year, month, day, ampm, hour, minute] = match;
+
+                                let parsedHour = parseInt(hour, 10);
+                                if (ampm === "오후" && parsedHour < 12) {
+                                  parsedHour += 12;
+                                } else if (ampm === "오전" && parsedHour === 12) {
+                                  parsedHour = 0;
+                                }
+
+                                const timeDiff = Date.now() - new Date(parseInt(year, 10),          // 연도
+                                  parseInt(month, 10) - 1,     // 월 (0부터 시작)
+                                  parseInt(day, 10),           // 일
+                                  parsedHour,                  // 시
+                                  parseInt(minute, 10)         // 분
+                                ).getTime();
+                                return timeDiff >= 0 && timeDiff <= 60000; // 1분 이내
+                              }
+                              return false;
+                            }
+                          }
+                          return false;
+                        })
+                        .map(item => item.querySelector(".xS")); // 메일 링크를 추출
                       }
 
                       console.log(mailLinks);
@@ -145,55 +182,60 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
                         const checkMailContent = async () => {
                           let contentElement;
-                          let mailTime;
 
                           if (mailOption === "naver") {
                             contentElement = document.querySelector(".mail_view_contents_inner");
-                          } else if (mailOption === "google") {
-                            // Check Gmail time first
-                            const timeElement = document.querySelector(".g3");
-                            if (timeElement) {
-                              mailTime = new Date(timeElement.getAttribute("title"));
-                              console.log("Mail time:", mailTime);
 
-                              // Check if mail is recent (within 1 minute)
-                              const timeDiff = Date.now() - mailTime.getTime();
-                              if (timeDiff > 60000) { // more than 1 minute old
-                                console.log("Mail is too old, searching for next mail");
-                                setTimeout(findMailLinks, 5000);
-                                return;
-                              }
-                            }
+                            if (contentElement) {
+                              const content = contentElement.innerText;
+                              const match = content.match(/\b\d{6}\b/);
+                              // resolve(match ? match[0] : "No auth code found");
+                              if (match) {
+                                const deleteButton = document.querySelector(".button_task.svg_delete");
+                                if (deleteButton) {
+                                  console.log("Found delete button. Clicking to delete the mail...");
+                                  deleteButton.click(); // 삭제 버튼 클릭
+                                  console.log("Mail deletion initiated.");
+                                } else {
+                                  console.error("Delete button not found. Mail deletion failed.");
+                                }
 
-                            const newMail = document.querySelector(".ata-asJ");
-                            await new Promise(resolve => setTimeout(resolve, 100));
-                            if (newMail) {
-                              newMail.click();
-                            }
-                            contentElement = document.querySelectorAll(".a3s.aiL");
-                            contentElement = contentElement[contentElement.length - 1];
-                          }
-
-                          if (contentElement) {
-                            const content = contentElement.innerText;
-                            const match = content.match(/\b\d{6}\b/);
-                            // resolve(match ? match[0] : "No auth code found");
-                            if (match) {
-                              const deleteButton = document.querySelector(".button_task.svg_delete");
-                              if (deleteButton) {
-                                console.log("Found delete button. Clicking to delete the mail...");
-                                deleteButton.click(); // 삭제 버튼 클릭
-                                console.log("Mail deletion initiated.");
+                                resolve(match[0]);
                               } else {
-                                console.error("Delete button not found. Mail deletion failed.");
+                                resolve("No auth code found(에러 발생)");
                               }
-
-                              resolve(match[0]);
                             } else {
-                              resolve("No auth code found(에러 발생)");
+                              setTimeout(checkMailContent, 100);
                             }
-                          } else {
-                            setTimeout(checkMailContent, 100);
+                          } else if (mailOption === "google") {
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                            const contentElements = document.querySelectorAll(".a3s.aiL");
+                            const contentElement = contentElements[contentElements.length - 1]; // 가장 최근 메일의 본문
+
+                            if (contentElement) {
+                              const content = contentElement.innerText; // 메일 본문 텍스트 가져오기
+                              const match = content.match(/\b\d{6}\b/); // 6자리 인증 번호 찾기
+                              if (match) {
+                                console.log("Auth code found:", match[0]);
+
+                                // 메일 삭제 버튼 클릭
+                                const deleteButton = document.querySelector("div[act='10']");
+                                if (deleteButton) {
+                                  console.log("Found delete button. Clicking to delete the mail...");
+                                  deleteButton.click(); // 삭제 버튼 클릭
+                                  console.log("Mail deletion initiated.");
+                                } else {
+                                  console.error("Delete button not found. Mail deletion failed.");
+                                }
+
+                                resolve(match[0]); // 인증 번호 반환
+                              } else {
+                                console.error("No auth code found in mail content.");
+                                resolve("No auth code found.");
+                              }
+                            } else {
+                              setTimeout(checkMailContent, 100); // 본문을 찾지 못했을 경우 재시도
+                            }
                           }
                         };
 
@@ -207,15 +249,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                         }
                         console.log("No mail links found. Retrying...");
 
-                        // '받은메일함' 탭 클릭
-                        const inboxTab = document.querySelectorAll("ul.smart_tab_list .smart_tab_link.selected")[0];
-                        if (inboxTab) {
-                          console.log("Found '받은메일함' tab. Clicking to refresh mail list...");
-                          inboxTab.click(); // 클릭 이벤트 트리거
+                        if (mailOption === "naver") {
+                          // '받은메일함' 탭 클릭
+                          const inboxTab = document.querySelectorAll("ul.smart_tab_list .smart_tab_link.selected")[0];
+                          if (inboxTab) {
+                            console.log("Found '받은메일함' tab. Clicking to refresh mail list...");
+                            inboxTab.click(); // 클릭 이벤트 트리거
 
-                          setTimeout(findMailLinks, 100);
+                            setTimeout(findMailLinks, 100);
+                          } else {
+                            setTimeout(findMailLinks, 100);
+                          }
                         } else {
-                          setTimeout(findMailLinks, 100);
+                          // '받은메일함' 탭 클릭
+                          const inboxButton = document.querySelector("a[aria-label^='받은편지함']");
+                          if (inboxButton) {
+                            inboxButton.click(); // 클릭 이벤트 트리거
+
+                            setTimeout(findMailLinks, 100);
+                          } else {
+                            setTimeout(findMailLinks, 100);
+                          }
                         }
                       }
                     };
