@@ -92,7 +92,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                           }
 
                           const textElement = item.querySelector(".mail_title .text");
-                          if (!textElement || !textElement.textContent.includes("[카이스트] 인증 번호 입니다.")) {
+                          if (!textElement || !textElement.textContent.includes("[발신전용] KAIST 본인인증번호")) {
                             return false;
                           } // 메일 제목에 "[카이스트] 인증 번호 입니다."가 없는 경우 제외
 
@@ -138,7 +138,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                         mailLinks = Array.from(allMailItems)
                         .filter(item => {
                           const textElement = item.querySelector(".bqe");
-                          if (!textElement || !textElement.textContent.includes("[카이스트] 인증 번호 입니다.")) {
+                          if (!textElement || !textElement.textContent.includes("[발신전용] KAIST 본인인증번호")) {
                             return false;
                           } // 메일 제목에 "[카이스트] 인증 번호 입니다."가 없는 경우 제외
 
